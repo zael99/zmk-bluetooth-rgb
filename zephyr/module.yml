@@ -17,4 +17,3 @@ build:
     dts_root: .
     # Folder containing a "snippets" folder (. = root)
     snippet_root:  .
-    source_directory: src
