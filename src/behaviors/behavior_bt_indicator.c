@@ -37,8 +37,8 @@ struct behavior_bt_indicator_config {};
 static uint8_t profile_leds[] = {7, 8, 9, 10, 11};
 static bool is_indicator_active = false;
 
-struct zmk_led_hsb inactive_colour = INACTIVE_LED_COLOUR
-struct zmk_led_hsb active_colour = ACTIVE_LED_COLOUR
+struct zmk_led_hsb inactive_colour = INACTIVE_LED_COLOUR;
+struct zmk_led_hsb active_colour = ACTIVE_LED_COLOUR;
 /* ====== Properties ====== */
 
 /* ====== Initialization ====== */
