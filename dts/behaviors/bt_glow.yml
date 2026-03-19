@@ -1,8 +1,0 @@
-/ {
-    behaviors {
-        /omit-if-no-ref/ bt_glow: bt_glow {
-            compatible = "zmk,behavior-bt-glow";
-            #binding-cells = <0>;
-        };
-    };
-};

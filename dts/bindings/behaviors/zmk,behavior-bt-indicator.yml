@@ -1,5 +1,5 @@
 description: Bluetooth RGB Indicator
 
-compatible: "zmk,behavior-bt-glow"
+compatible: "zmk,behavior-bt-indicator"
 
 include: zero_param.yaml
