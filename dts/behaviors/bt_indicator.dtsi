@@ -9,9 +9,7 @@
 
 / {
     behaviors {
-#if ZMK_BEHAVIOR_OMIT(GRESC)
         /omit-if-no-ref/
-#endif
         bt_ind: bt_ind {
             compatible = "zmk,behavior-bt-indicator";
             #binding-cells = <0>;
