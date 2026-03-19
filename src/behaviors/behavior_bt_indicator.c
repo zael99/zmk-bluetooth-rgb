@@ -54,10 +54,10 @@ void refresh_bt_leds() {
     for (int i = 0; i < 5; i++) {
         if (is_indicator_active && i == active_profile) {
             // Light up active profile in Blue
-            zmk_rgb_underglow_set_hsb_at_index(profile_leds[i], inactive_colour;
+            zmk_rgb_underglow_set_hsb_at_index(profile_leds[i], inactive_colour);
         } else {
             // Turn off if key released OR not the active profile
-            zmk_rgb_underglow_set_hsb_at_index(profile_leds[i], active_colour;
+            zmk_rgb_underglow_set_hsb_at_index(profile_leds[i], active_colour);
         }
     }
 }
