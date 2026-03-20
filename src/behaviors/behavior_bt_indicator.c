@@ -110,6 +110,6 @@ BEHAVIOR_DT_INST_DEFINE(0,
                         POST_KERNEL,                          
                         CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, 
                         &bt_indicator_driver_api);
-/* ====== ZMK Behaviour Registration ====== */Q
+/* ====== ZMK Behaviour Registration ====== */
 
 #endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */
