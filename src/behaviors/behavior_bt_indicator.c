@@ -25,6 +25,13 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
+#if !DT_HAS_CHOSEN(zmk_underglow)
+#error "A zmk,underglow chosen node must be declared"
+#endif
+
+#define STRIP_CHOSEN DT_CHOSEN(zmk_underglow)
+#define STRIP_NUM_PIXELS DT_PROP(STRIP_CHOSEN, chain_length)
+
 /* ====== Struct Definitions ====== */
 // Instance-specific Data struct
 struct behavior_bt_indicator_data {};
@@ -34,6 +41,11 @@ struct behavior_bt_indicator_config {};
 /* ====== Struct Definitions ====== */
 
 /* ====== Properties ====== */
+
+static const struct device *led_strip;
+
+static struct led_rgb pixels[STRIP_NUM_PIXELS];
+
 static uint8_t profile_leds[] = {7, 8, 9, 10, 11};
 static bool is_indicator_active = false;
 
@@ -54,10 +66,10 @@ void refresh_bt_leds() {
     for (int i = 0; i < 5; i++) {
         if (is_indicator_active && i == active_profile) {
             // Light up active profile in Blue
-            zmk_rgb_underglow_set_hsb_at_index(profile_leds[i], inactive_colour);
+            //zmk_rgb_underglow_set_hsb_at_index(profile_leds[i], inactive_colour);
         } else {
             // Turn off if key released OR not the active profile
-            zmk_rgb_underglow_set_hsb_at_index(profile_leds[i], active_colour);
+            //zmk_rgb_underglow_set_hsb_at_index(profile_leds[i], active_colour);
         }
     }
 }
