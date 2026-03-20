@@ -106,7 +106,7 @@ BEHAVIOR_DT_INST_DEFINE(0,
                         bt_indicator_init, 
                         NULL, 
                         NULL,                               
-                        &behavior_bt_indicator_config, 
+                        NULL, 
                         POST_KERNEL,                          
                         CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, 
                         &bt_indicator_driver_api);
