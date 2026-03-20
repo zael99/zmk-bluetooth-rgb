@@ -9,6 +9,7 @@
 // Dependencies
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/drivers/led_strip.h>
 #include <drivers/behavior.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
