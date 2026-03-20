@@ -102,13 +102,14 @@ static const struct behavior_driver_api bt_indicator_driver_api = {
     .locality = BEHAVIOR_LOCALITY_GLOBAL
 };
 
-BEHAVIOR_DT_INST_DEFINE(0,                                                  // Instance Number (0)
-                        bt_indicator_init,                                  // Initialization Function
-                        NULL,                                               // Power Management Device Pointer
-                        &bt_indicator_data,                                 // Behavior Data Pointer
-                        &bt_indicator_config,                               // Behavior Configuration Pointer
-                        POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT    // Initialization Level, Device Priority
-                        &bt_indicator_driver_api);                          // API struct
+BEHAVIOR_DT_INST_DEFINE(0, 
+                        bt_indicator_init, 
+                        NULL, 
+                        NULL,                               
+                        &bt_indicator_config, 
+                        POST_KERNEL,                          
+                        CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, 
+                        &bt_indicator_driver_api);
 /* ====== ZMK Behaviour Registration ====== */Q
 
 #endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */
