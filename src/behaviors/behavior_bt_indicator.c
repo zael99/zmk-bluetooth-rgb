@@ -113,7 +113,7 @@ static struct led_rgb hsb_to_rgb(struct zmk_led_hsb hsb) {
     return rgb;
 }
 
-void set_pixel_color(int index, zmk_led_hsb color) {
+void set_pixel_color(int index, struct zmk_led_hsb color) {
     if (index > STRIP_NUM_PIXELS || index < 0) {
         // Return if outside appropriate range
         return;
