@@ -29,7 +29,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/events/ble_active_profile_changed.h>
 
 // Module Imports
-#include <zmk/bt_indicator.h>
+#include <dt-bindings/zmk/bt_indicator.h>
 /* ====== Dependencies ====== */
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
