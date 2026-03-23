@@ -46,8 +46,8 @@ static bool is_indicator_active = false;
 static const struct device *led_strip;
 static struct led_rgb pixels[STRIP_NUM_PIXELS];
 
-struct zmk_led_hsb inactive_colour = INACTIVE_LED_COLOUR
-struct zmk_led_hsb active_colour = ACTIVE_LED_COLOUR
+struct zmk_led_hsb inactive_colour = INACTIVE_LED_COLOUR;
+struct zmk_led_hsb active_colour = ACTIVE_LED_COLOUR;
 /* ====== Properties ====== */
 
 /* ====== Initialization ====== */
