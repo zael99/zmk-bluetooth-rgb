@@ -119,7 +119,7 @@ void set_pixel_color(int index, struct zmk_led_hsb color) {
         return;
     }
 
-    pixels[i] = hsb_to_rgb(hsb_scale_min_max(color));
+    pixels[index] = hsb_to_rgb(hsb_scale_min_max(color));
 }
 
 void refresh_bt_leds() {
