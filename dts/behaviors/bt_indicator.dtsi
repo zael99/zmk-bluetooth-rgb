@@ -6,6 +6,7 @@
 
 / {
     behaviors {
+        /omit-if-no-ref/ 
         bt_ind: bt_ind {
             compatible = "zmk,behavior-bt-indicator";
             #binding-cells = <0>;
