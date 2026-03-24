@@ -138,6 +138,8 @@ void refresh_bt_leds() {
     // Light up active profile in the active colour
     uint8_t active_profile = zmk_ble_active_profile_index();
     set_pixel_color(profile_leds[active_profile], active_colour);
+    
+    led_strip_update_rgb(led_strip, pixels, STRIP_NUM_PIXELS);
 }
 /* ====== Helper Functions ====== */
 
