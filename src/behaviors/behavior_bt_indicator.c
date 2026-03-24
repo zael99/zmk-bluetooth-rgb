@@ -35,6 +35,8 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
 /* ====== Properties ====== */
+#define STRIP_CHOSEN DT_CHOSEN(zmk_underglow)
+#define STRIP_NUM_PIXELS DT_PROP(STRIP_CHOSEN, chain_length)
 
 static const struct device *led_strip;
 
