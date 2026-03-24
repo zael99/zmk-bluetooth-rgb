@@ -1,7 +1,7 @@
 # Delete all unused properties.
 
 # Give your module a name
-name: zmk-behavior-bt_glow
+name: zmk-behavior-bt-indicator
 build:
   cmake: .
   settings:
