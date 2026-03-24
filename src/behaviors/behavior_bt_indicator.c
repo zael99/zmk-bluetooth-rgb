@@ -140,6 +140,8 @@ void refresh_bt_leds() {
 /* ====== Helper Functions ====== */
 
 /* ====== Keypress Handlers ====== */
+void set_bt_indicator_state(bool active);
+
 static int on_bt_indicator_binding_pressed(struct zmk_behavior_binding *binding,
                                            struct zmk_behavior_binding_event event) {
     set_bt_indicator_state(true);
