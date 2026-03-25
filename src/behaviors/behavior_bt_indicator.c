@@ -160,6 +160,11 @@ static int on_bt_indicator_binding_released(struct zmk_behavior_binding *binding
 
 void set_bt_indicator_state(bool active) {
     is_indicator_active = active;
+    if (active) {
+        zmk_rgb_underglow_off();
+    } else {
+        zmk_rgb_underglow_on();
+    }
     refresh_bt_leds();
 }
 /* ====== Keypress Handlers ====== */
