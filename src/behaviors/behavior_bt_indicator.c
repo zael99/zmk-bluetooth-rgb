@@ -47,6 +47,9 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 // 1/256
 #define RGB_MULTIPIER 0.0039215686f
+
+#define ACTIVE_LED_COLOR {.h = 0, .s = 0, .b = 0}
+#define INACTIVE_LED_COLOR {.h = 240, .s = 100, .b = 50}
 /* ====== Defines ====== */
 
 /* ====== Properties ====== */
