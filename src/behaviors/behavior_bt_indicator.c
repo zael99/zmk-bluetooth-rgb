@@ -34,22 +34,36 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
-/* ====== Properties ====== */
+/* ====== Defines ====== */
 #define STRIP_CHOSEN DT_CHOSEN(zmk_underglow)
 #define STRIP_NUM_PIXELS DT_PROP(STRIP_CHOSEN, chain_length)
+
+#define HUE_MAX 360
+#define SAT_MAX 100
+#define BRT_MAX 100
+
+#define HUE_MAX_MULTIPLIER (1.0f / HUE_MAX)
+#define SAT_MAX_MULTIPLIER (1.0f / SAT_MAX)
+#define BRT_MAX_MULTIPLIER (1.0f / BRT_MAX)
+
+// 1/256
+#define RGB_MULTIPIER 0.0039215686f
+/* ====== Defines ====== */
+
+/* ====== Properties ====== */
 
 static const struct device *led_strip;
 
 static struct led_rgb pixels[STRIP_NUM_PIXELS];
 
-static uint8_t profile_leds[] = {7, 8, 9, 10, 11};
+static uint8_t profile_leds[] = {17, 18, 19, 20, 21};
 static bool is_indicator_active = false;
 
 static const struct device *led_strip;
 static struct led_rgb pixels[STRIP_NUM_PIXELS];
 
-struct zmk_led_hsb inactive_colour = INACTIVE_LED_COLOUR;
-struct zmk_led_hsb active_colour = ACTIVE_LED_COLOUR;
+struct led_color inactive_color = INACTIVE_LED_COLOR;
+struct zmk_led_hsb active_color = ACTIVE_LED_COLOR;
 /* ====== Properties ====== */
 
 /* ====== Initialization ====== */
@@ -62,7 +76,7 @@ static int bt_indicator_init(const struct device *dev) {
 /* ====== Helper Functions ====== */
 static struct zmk_led_hsb hsb_scale_min_max(struct zmk_led_hsb hsb) {
     hsb.b = CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN +
-            (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX - CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN) * hsb.b / BRT_MAX;
+            (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX - CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN) * hsb.b * BRT_MAX_MULTIPLIER;
     return hsb;
 }
 
@@ -70,44 +84,44 @@ static struct led_rgb hsb_to_rgb(struct zmk_led_hsb hsb) {
     float r = 0, g = 0, b = 0;
 
     uint8_t i = hsb.h / 60;
-    float v = hsb.b / ((float)BRT_MAX);
-    float s = hsb.s / ((float)SAT_MAX);
-    float f = hsb.h / ((float)HUE_MAX) * 6 - i;
+    float v = hsb.b * BRT_MAX_MULTIPLIER;
+    float s = hsb.s * SAT_MAX_MULTIPLIER;
+    float f = hsb.h * HUE_MAX_MULTIPLIER * 6 - i;
     float p = v * (1 - s);
     float q = v * (1 - f * s);
     float t = v * (1 - (1 - f) * s);
 
     switch (i % 6) {
-    case 0:
-        r = v;
-        g = t;
-        b = p;
-        break;
-    case 1:
-        r = q;
-        g = v;
-        b = p;
-        break;
-    case 2:
-        r = p;
-        g = v;
-        b = t;
-        break;
-    case 3:
-        r = p;
-        g = q;
-        b = v;
-        break;
-    case 4:
-        r = t;
-        g = p;
-        b = v;
-        break;
-    case 5:
-        r = v;
-        g = p;
-        b = q;
-        break;
+        case 0:
+            r = v;
+            g = t;
+            b = p;
+            break;
+        case 1:
+            r = q;
+            g = v;
+            b = p;
+            break;
+        case 2:
+            r = p;
+            g = v;
+            b = t;
+            break;
+        case 3:
+            r = p;
+            g = q;
+            b = v;
+            break;
+        case 4:
+            r = t;
+            g = p;
+            b = v;
+            break;
+        case 5:
+            r = v;
+            g = p;
+            b = q;
+            break;
     }
 
     struct led_rgb rgb = {r : r * 255, g : g * 255, b : b * 255};
@@ -115,19 +129,18 @@ static struct led_rgb hsb_to_rgb(struct zmk_led_hsb hsb) {
     return rgb;
 }
 
-void set_pixel_color(int index, struct zmk_led_hsb color) {
-    if (index > STRIP_NUM_PIXELS || index < 0) {
-        // Return if outside appropriate range
+static void set_pixel_rgb_color(int index, struct led_rgb color) {
+    if (index > STRIP_NUM_PIXELS) {
         return;
     }
 
-    pixels[index] = hsb_to_rgb(hsb_scale_min_max(color));
+    pixels[index] = color;
 }
 
-void refresh_bt_leds() {
+static void refresh_bt_leds() {
     // First set all leds to off
     for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
-        set_pixel_color(i, inactive_colour);
+        set_pixel_rgb_color(i, inactive_color);
     }
 
     // Anything passed here is for setting the BT indicator color
@@ -135,9 +148,9 @@ void refresh_bt_leds() {
         return;
     }
 
-    // Light up active profile in the active colour
+    // Light up active profile in the active color
     uint8_t active_profile = zmk_ble_active_profile_index();
-    set_pixel_color(profile_leds[active_profile], active_colour);
+    set_pixel_color(profile_leds[active_profile], active_color);
     
     led_strip_update_rgb(led_strip, pixels, STRIP_NUM_PIXELS);
 }
