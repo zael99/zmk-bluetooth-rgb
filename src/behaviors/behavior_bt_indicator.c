@@ -17,7 +17,6 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zephyr/drivers/led_strip.h>
 #include <drivers/behavior.h>
 
-
 // ZMK Imports
 #include <zmk/behavior.h>
 #include <zmk/keys.h>
@@ -32,7 +31,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <dt-bindings/zmk/bt_indicator.h>
 /* ====== Dependencies ====== */
 
-#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
+//#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
 /* ====== Defines ====== */
 #define STRIP_CHOSEN DT_CHOSEN(zmk_underglow)
@@ -212,4 +211,4 @@ BEHAVIOR_DT_INST_DEFINE(0,
                         &bt_indicator_driver_api);
 /* ====== ZMK Behaviour Registration ====== */
 
-#endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */
+//#endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */
