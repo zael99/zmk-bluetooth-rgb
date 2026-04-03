@@ -139,11 +139,11 @@ static void set_pixel_rgb_color(int index, struct led_rgb color) {
 
 static void refresh_bt_leds() {
     if (!is_indicator_active) {
-        zmk_rgb_underglow_set_hsb(previous_color);
+        zmk_rgb_underglow_set_hsb(prev_color);
         return;
     }
 
-    previous_color = zmk_rgb_underglow_calc_hue(0);
+    prev_color = zmk_rgb_underglow_calc_hue(0);
     zmk_rgb_underglow_set_hsb(active_color);
 /*
     // First set all leds to off
