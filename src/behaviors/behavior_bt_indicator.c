@@ -63,6 +63,7 @@ static bool is_indicator_active = false;
 
 struct zmk_led_hsb inactive_color = INACTIVE_LED_COLOR;
 struct zmk_led_hsb active_color = ACTIVE_LED_COLOR;
+struct zmk_led_hsb prev_color;
 /* ====== Properties ====== */
 
 /* ====== Initialization ====== */
@@ -137,6 +138,14 @@ static void set_pixel_rgb_color(int index, struct led_rgb color) {
 }
 
 static void refresh_bt_leds() {
+    if (!is_indicator_active) {
+        zmk_rgb_underglow_set_hsb(previous_color);
+        return;
+    }
+
+    previous_color = zmk_rgb_underglow_calc_hue(0);
+    zmk_rgb_underglow_set_hsb(active_color);
+/*
     // First set all leds to off
     for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
         set_pixel_rgb_color(i, hsb_to_rgb(inactive_color));
@@ -148,18 +157,18 @@ static void refresh_bt_leds() {
         set_pixel_rgb_color(profile_leds[active_profile], hsb_to_rgb(active_color));
     }
     
-    led_strip_update_rgb(led_strip, pixels, STRIP_NUM_PIXELS);
+    led_strip_update_rgb(led_strip, pixels, STRIP_NUM_PIXELS);*/
 }
 /* ====== Helper Functions ====== */
 
 /* ====== Keypress Handlers ====== */
 void set_bt_indicator_state(bool active) {
     is_indicator_active = active;
-    if (active) {
-        zmk_rgb_underglow_off();
-    } else {
-        zmk_rgb_underglow_on();
-    }
+    //if (active) {
+    //    zmk_rgb_underglow_off();
+    //} else {
+    //    zmk_rgb_underglow_on();
+    //}
     refresh_bt_leds();
 }
 
