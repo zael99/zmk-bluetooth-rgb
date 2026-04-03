@@ -48,8 +48,8 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 // 1/256
 #define RGB_MULTIPIER 0.0039215686f
 
-#define ACTIVE_LED_COLOR {.h = 0, .s = 100, .b = 100}
-#define INACTIVE_LED_COLOR {.h = 240, .s = 100, .b = 50}
+#define ACTIVE_LED_COLOR (struct zmk_led_hsb) {.h = 0, .s = 100, .b = 100}
+#define INACTIVE_LED_COLOR (struct zmk_led_hsb) {.h = 240, .s = 100, .b = 50}
 /* ====== Defines ====== */
 
 /* ====== Properties ====== */
@@ -63,7 +63,9 @@ static bool is_indicator_active = false;
 
 struct zmk_led_hsb inactive_color = INACTIVE_LED_COLOR;
 struct zmk_led_hsb active_color = ACTIVE_LED_COLOR;
+
 struct zmk_led_hsb prev_color;
+int prev_effect = -1;
 /* ====== Properties ====== */
 
 /* ====== Initialization ====== */
@@ -138,12 +140,22 @@ static void set_pixel_rgb_color(int index, struct led_rgb color) {
 }
 
 static void refresh_bt_leds() {
+    struct zmk_led_hsb current_color = zmk_rgb_underglow_calc_hue(0);
+    int current_effect = zmk_rgb_underglow_calc_effect(0);
     if (!is_indicator_active) {
-        zmk_rgb_underglow_set_hsb(prev_color);
+        if (current_color.h != prev_color.h && current_color.s != prev_color.s && current_color.b != prev_color.b) {
+            zmk_rgb_underglow_set_hsb(prev_color);
+        }
+
+        if (current_effect != prev_effect) {
+            zmk_rgb_underglow_select_effect(prev_effect);
+        }
+
         return;
     }
 
-    prev_color = zmk_rgb_underglow_calc_hue(0);
+    prev_color = current_color;
+    prev_effect = current_effect;
     zmk_rgb_underglow_set_hsb(active_color);
 /*
     // First set all leds to off
