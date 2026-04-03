@@ -48,7 +48,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 // 1/256
 #define RGB_MULTIPIER 0.0039215686f
 
-#define ACTIVE_LED_COLOR {.h = 0, .s = 0, .b = 0}
+#define ACTIVE_LED_COLOR {.h = 0, .s = 100, .b = 100}
 #define INACTIVE_LED_COLOR {.h = 240, .s = 100, .b = 50}
 /* ====== Defines ====== */
 
@@ -142,21 +142,26 @@ static void refresh_bt_leds() {
         set_pixel_rgb_color(i, hsb_to_rgb(inactive_color));
     }
 
-    // Anything passed here is for setting the BT indicator color
-    if (!is_indicator_active) {
-        return;
+    // Light up active profile in the active color if indicator is active
+    if (is_indicator_active) {
+        uint8_t active_profile = zmk_ble_active_profile_index();
+        set_pixel_rgb_color(profile_leds[active_profile], hsb_to_rgb(active_color));
     }
-
-    // Light up active profile in the active color
-    uint8_t active_profile = zmk_ble_active_profile_index();
-    set_pixel_rgb_color(profile_leds[active_profile], hsb_to_rgb(active_color));
     
     led_strip_update_rgb(led_strip, pixels, STRIP_NUM_PIXELS);
 }
 /* ====== Helper Functions ====== */
 
 /* ====== Keypress Handlers ====== */
-void set_bt_indicator_state(bool active);
+void set_bt_indicator_state(bool active) {
+    is_indicator_active = active;
+    if (active) {
+        zmk_rgb_underglow_off();
+    } else {
+        zmk_rgb_underglow_on();
+    }
+    refresh_bt_leds();
+}
 
 static int on_bt_indicator_binding_pressed(struct zmk_behavior_binding *binding,
                                            struct zmk_behavior_binding_event event) {
@@ -169,30 +174,18 @@ static int on_bt_indicator_binding_released(struct zmk_behavior_binding *binding
     set_bt_indicator_state(false);
     return ZMK_BEHAVIOR_OPAQUE;
 }
-
-void set_bt_indicator_state(bool active) {
-    is_indicator_active = active;
-    if (active) {
-        zmk_rgb_underglow_off();
-    } else {
-        zmk_rgb_underglow_on();
-    }
-    refresh_bt_leds();
-}
 /* ====== Keypress Handlers ====== */
 
-/* ====== ZMK Events ====== */
-static int on_bt_profile_changed(const zmk_event_t *eh);
-
-ZMK_LISTENER(behavior_bt_indicator, on_bt_profile_changed);
-ZMK_SUBSCRIPTION(behavior_bt_indicator, zmk_ble_active_profile_changed);
-
+/* ====== ZMK Bluetooth Profile Updated Events ====== */
 // Listener for Profile Changes (updates if key is already held)
 static int on_bt_profile_changed(const zmk_event_t *eh) {
     refresh_bt_leds();
     return ZMK_BEHAVIOR_OPAQUE;
 }
-/* ====== ZMK Events ====== */
+
+ZMK_LISTENER(behavior_bt_indicator, on_bt_profile_changed);
+ZMK_SUBSCRIPTION(behavior_bt_indicator, zmk_ble_active_profile_changed);
+/* ====== ZMK Bluetooth Profile Updated Events ====== */
 
 /* ====== ZMK Behaviour Registration ====== */
 static const struct behavior_driver_api bt_indicator_driver_api = {
