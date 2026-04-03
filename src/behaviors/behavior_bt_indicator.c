@@ -61,10 +61,7 @@ static struct led_rgb pixels[STRIP_NUM_PIXELS];
 static uint8_t profile_leds[] = {17, 18, 19, 20, 21};
 static bool is_indicator_active = false;
 
-static const struct device *led_strip;
-static struct led_rgb pixels[STRIP_NUM_PIXELS];
-
-struct led_color inactive_color = INACTIVE_LED_COLOR;
+struct zmk_led_hsb inactive_color = INACTIVE_LED_COLOR;
 struct zmk_led_hsb active_color = ACTIVE_LED_COLOR;
 /* ====== Properties ====== */
 
@@ -126,7 +123,7 @@ static struct led_rgb hsb_to_rgb(struct zmk_led_hsb hsb) {
             break;
     }
 
-    struct led_rgb rgb = {r : r * 255, g : g * 255, b : b * 255};
+    struct led_rgb rgb = {.r = (uint8_t)(r * 255), .g = (uint8_t)(g * 255), .b = (uint8_t)(b * 255)};
 
     return rgb;
 }
@@ -142,7 +139,7 @@ static void set_pixel_rgb_color(int index, struct led_rgb color) {
 static void refresh_bt_leds() {
     // First set all leds to off
     for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
-        set_pixel_rgb_color(i, inactive_color);
+        set_pixel_rgb_color(i, hsb_to_rgb(inactive_color));
     }
 
     // Anything passed here is for setting the BT indicator color
@@ -152,7 +149,7 @@ static void refresh_bt_leds() {
 
     // Light up active profile in the active color
     uint8_t active_profile = zmk_ble_active_profile_index();
-    set_pixel_color(profile_leds[active_profile], active_color);
+    set_pixel_rgb_color(profile_leds[active_profile], hsb_to_rgb(active_color));
     
     led_strip_update_rgb(led_strip, pixels, STRIP_NUM_PIXELS);
 }
