@@ -143,7 +143,7 @@ static void set_pixel_rgb_color(int index, struct led_rgb color) {
 static void save_current_led_state() {
     prev_color = zmk_rgb_underglow_calc_hue(0);
     prev_effect = zmk_rgb_underglow_calc_effect(0);
-    zmk_rgb_ext_get_state(&prev_on_off_state);
+    zmk_rgb_underglow_get_state(&prev_on_off_state);
 }
 
 static void restore_prev_led_state() {
