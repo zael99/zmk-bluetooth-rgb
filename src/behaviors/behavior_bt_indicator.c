@@ -146,27 +146,27 @@ static struct zmk_led_hsb hsb_scale_min_max(struct zmk_led_hsb hsb) {
 }
 
 static void set_pixel_hsb_color(int index, struct zmk_led_hsb color) {
-    if (index > STRIP_NUM_PIXELS) {
-        return;
-    }
-
     set_pixel_rgb_color(index, hsb_to_rgb(hsb_scale_min_max(color)));
 }
 
 static void set_pixels_solid_hsb_color(struct zmk_led_hsb color) {
+    struct led_rgb rgb_color = hsb_to_rgb(hsb_scale_min_max(color));
     for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
-        set_pixel_hsb_color(i, color);
+        set_pixel_hsb_color(i, rgb_color);
     }
 }
 /* ====== HSB Functions ====== */
 
 /* ====== LED State Management ====== */
 static void bt_indicator_refresh_handler(struct k_work *work) {
+    LOG_DBG("BT indicator refresh handler executing");
     if (!is_indicator_active) {
+        LOG_DBG("BT indicator became inactive, skipping update");
         return;
     }
-    set_pixels_solid_rgb_color(hsb_to_rgb(hsb_scale_min_max(active_color)));
+    set_pixels_solid_hsb_color(active_color);
     led_strip_update_rgb(led_strip, &pixels, STRIP_NUM_PIXELS);
+    LOG_DBG("BT indicator LEDs updated to active color");
 }
 
 static void save_current_led_state() {
@@ -198,6 +198,7 @@ static void restore_prev_led_state() {
 /* ====== Helper Functions ====== */
 static void refresh_bt_leds() {
     if (!is_indicator_active) {
+        LOG_DBG("BT indicator not active, skipping refresh");
         return;
     }
 
@@ -208,15 +209,18 @@ static void refresh_bt_leds() {
     zmk_rgb_underglow_off();
     
     // Schedule the LED update for 1000ms later to avoid conflicts with rgb_underglow handler
+    LOG_DBG("BT indicator refresh called, scheduling work for 1000ms");
     k_work_schedule(&bt_indicator_refresh_work, K_MSEC(1000));
 }
 /* ====== Helper Functions ====== */
 
 /* ====== Keypress Handlers ====== */
 void set_bt_indicator_state(bool active) {
+    LOG_DBG("BT indicator state change: active=%d", active);
     is_indicator_active = active;
 
     if (!is_indicator_active) {
+        LOG_DBG("BT indicator released, cancelling work and restoring state");
         k_work_cancel_delayable(&bt_indicator_refresh_work);
         restore_prev_led_state();
     }
