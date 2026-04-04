@@ -152,7 +152,7 @@ static void set_pixel_hsb_color(int index, struct zmk_led_hsb color) {
 static void set_pixels_solid_hsb_color(struct zmk_led_hsb color) {
     struct led_rgb rgb_color = hsb_to_rgb(hsb_scale_min_max(color));
     for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
-        set_pixel_hsb_color(i, rgb_color);
+        set_pixel_rgb_color(i, rgb_color);
     }
 }
 /* ====== HSB Functions ====== */
