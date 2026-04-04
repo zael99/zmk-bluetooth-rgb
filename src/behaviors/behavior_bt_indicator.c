@@ -140,27 +140,17 @@ static void set_pixel_rgb_color(int index, struct led_rgb color) {
 }
 
 static void refresh_bt_leds() {
-    if (is_indicator_active) {
+    if (!is_indicator_active) {
         return;
     }
 
+    // Save current color and effect before changing
     prev_color = zmk_rgb_underglow_calc_hue(0);
     prev_effect = zmk_rgb_underglow_calc_effect(0);
+    
+    // Set to active color with effect 0
     zmk_rgb_underglow_set_hsb(active_color);
     zmk_rgb_underglow_select_effect(0);
-/*
-    // First set all leds to off
-    for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
-        set_pixel_rgb_color(i, hsb_to_rgb(inactive_color));
-    }
-
-    // Light up active profile in the active color if indicator is active
-    if (is_indicator_active) {
-        uint8_t active_profile = zmk_ble_active_profile_index();
-        set_pixel_rgb_color(profile_leds[active_profile], hsb_to_rgb(active_color));
-    }
-    
-    led_strip_update_rgb(led_strip, pixels, STRIP_NUM_PIXELS);*/
 }
 /* ====== Helper Functions ====== */
 
