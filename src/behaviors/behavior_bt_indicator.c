@@ -139,24 +139,24 @@ static void set_pixels_solid_rgb_color(struct led_rgb color) {
 /* ====== RGB Functions ====== */
 
 /* ====== HSB Functions ====== */
+static struct zmk_led_hsb hsb_scale_min_max(struct zmk_led_hsb hsb) {
+    hsb.b = CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN +
+            (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX - CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN) * hsb.b * BRT_MAX_MULTIPLIER;
+    return hsb;
+}
+
 static void set_pixel_hsb_color(int index, struct zmk_led_hsb color) {
     if (index > STRIP_NUM_PIXELS) {
         return;
     }
 
-    pixels[index] = hsb_to_rgb(hsb_scale_min_max(color));
+    set_pixel_rgb_color(index, hsb_to_rgb(hsb_scale_min_max(color)));
 }
 
 static void set_pixels_solid_hsb_color(struct zmk_led_hsb color) {
     for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
         set_pixel_hsb_color(i, color);
     }
-}
-
-static struct zmk_led_hsb hsb_scale_min_max(struct zmk_led_hsb hsb) {
-    hsb.b = CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN +
-            (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX - CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN) * hsb.b * BRT_MAX_MULTIPLIER;
-    return hsb;
 }
 /* ====== HSB Functions ====== */
 
@@ -235,10 +235,15 @@ static int on_bt_indicator_binding_released(struct zmk_behavior_binding *binding
     set_bt_indicator_state(false);
     return ZMK_BEHAVIOR_OPAQUE;
 }
+
+static const struct behavior_driver_api bt_indicator_driver_api = {
+    .binding_pressed = on_bt_indicator_binding_pressed,
+    .binding_released = on_bt_indicator_binding_released,
+    .locality = BEHAVIOR_LOCALITY_GLOBAL
+};
 /* ====== Keypress Handlers ====== */
 
 /* ====== ZMK Bluetooth Profile Updated Events ====== */
-// Listener for Profile Changes (updates if key is already held)
 static int on_bt_profile_changed(const zmk_event_t *eh) {
     refresh_bt_leds();
     return ZMK_BEHAVIOR_OPAQUE;
@@ -253,12 +258,6 @@ static int bt_indicator_init(const struct device *dev) {
     led_strip = DEVICE_DT_GET(STRIP_CHOSEN);
     k_work_init_delayable(&bt_indicator_refresh_work, bt_indicator_refresh_handler);
     return 0;
-};
-
-static const struct behavior_driver_api bt_indicator_driver_api = {
-    .binding_pressed = on_bt_indicator_binding_pressed,
-    .binding_released = on_bt_indicator_binding_released,
-    .locality = BEHAVIOR_LOCALITY_GLOBAL
 };
 
 BEHAVIOR_DT_INST_DEFINE(0, 
