@@ -66,6 +66,7 @@ struct zmk_led_hsb active_color = ACTIVE_LED_COLOR;
 
 struct zmk_led_hsb prev_color;
 int prev_effect = -1;
+bool prev_on_off_state = false;
 /* ====== Properties ====== */
 
 /* ====== Initialization ====== */
@@ -139,16 +140,41 @@ static void set_pixel_rgb_color(int index, struct led_rgb color) {
     pixels[index] = color;
 }
 
+static void save_current_led_state() {
+    prev_color = zmk_rgb_underglow_calc_hue(0);
+    prev_effect = zmk_rgb_underglow_calc_effect(0);
+    zmk_rgb_ext_get_state(&prev_on_off_state);
+}
+
+static void restore_prev_led_state() {
+    // Restore previous effect if it was set
+    if (prev_effect != -1) {
+        zmk_rgb_underglow_select_effect(prev_effect);
+    }
+
+    // Only restore color if it was previously set (prevents restoring to default if no color was set before)
+    if (prev_color.h > 0 || prev_color.s > 0 || prev_color.b > 0) {
+        zmk_rgb_underglow_set_hsb(prev_color);
+    }
+    
+    // Restore on/off state
+    if (prev_on_off_state) {
+        zmk_rgb_underglow_on();
+    } else {
+        zmk_rgb_underglow_off();
+    }
+}
+
 static void refresh_bt_leds() {
     if (!is_indicator_active) {
         return;
     }
 
     // Save current color and effect before changing
-    prev_color = zmk_rgb_underglow_calc_hue(0);
-    prev_effect = zmk_rgb_underglow_calc_effect(0);
+    save_current_led_state();
     
     // Set to active color with effect 0
+    zmk_rgb_underglow_on();
     zmk_rgb_underglow_set_hsb(active_color);
     zmk_rgb_underglow_select_effect(0);
 }
@@ -159,18 +185,9 @@ void set_bt_indicator_state(bool active) {
     is_indicator_active = active;
 
     if (!is_indicator_active) {
-        if (prev_effect != -1) {
-            zmk_rgb_underglow_select_effect(prev_effect);
-        }
-        zmk_rgb_underglow_set_hsb(prev_color);
-        return;
+        restore_prev_led_state();
     }
 
-    //if (active) {
-    //    zmk_rgb_underglow_off();
-    //} else {
-    //    zmk_rgb_underglow_on();
-    //}
     refresh_bt_leds();
 }
 
