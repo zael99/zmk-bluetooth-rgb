@@ -71,22 +71,6 @@ bool prev_on_off_state = false;
 static struct k_work_delayable bt_indicator_refresh_work;
 /* ====== Properties ====== */
 
-/* ====== Initialization ====== */
-static void bt_indicator_refresh_handler(struct k_work *work) {
-    if (!is_indicator_active) {
-        return;
-    }
-    set_pixels_solid_rgb_color(hsb_to_rgb(hsb_scale_min_max(active_color)));
-    led_strip_update_rgb(led_strip, &pixels, STRIP_NUM_PIXELS);
-}
-
-static int bt_indicator_init(const struct device *dev) {
-    led_strip = DEVICE_DT_GET(STRIP_CHOSEN);
-    k_work_init_delayable(&bt_indicator_refresh_work, bt_indicator_refresh_handler);
-    return 0;
-};
-/* ====== Initialization ====== */
-
 /* ====== Color Conversion Functions ====== */
 static struct led_rgb hsb_to_rgb(struct zmk_led_hsb hsb) {
     float r = 0, g = 0, b = 0;
@@ -177,6 +161,14 @@ static struct zmk_led_hsb hsb_scale_min_max(struct zmk_led_hsb hsb) {
 /* ====== HSB Functions ====== */
 
 /* ====== LED State Management ====== */
+static void bt_indicator_refresh_handler(struct k_work *work) {
+    if (!is_indicator_active) {
+        return;
+    }
+    set_pixels_solid_rgb_color(hsb_to_rgb(hsb_scale_min_max(active_color)));
+    led_strip_update_rgb(led_strip, &pixels, STRIP_NUM_PIXELS);
+}
+
 static void save_current_led_state() {
     prev_color = zmk_rgb_underglow_calc_hue(0);
     prev_effect = zmk_rgb_underglow_calc_effect(0);
@@ -257,6 +249,12 @@ ZMK_SUBSCRIPTION(behavior_bt_indicator, zmk_ble_active_profile_changed);
 /* ====== ZMK Bluetooth Profile Updated Events ====== */
 
 /* ====== ZMK Behaviour Registration ====== */
+static int bt_indicator_init(const struct device *dev) {
+    led_strip = DEVICE_DT_GET(STRIP_CHOSEN);
+    k_work_init_delayable(&bt_indicator_refresh_work, bt_indicator_refresh_handler);
+    return 0;
+};
+
 static const struct behavior_driver_api bt_indicator_driver_api = {
     .binding_pressed = on_bt_indicator_binding_pressed,
     .binding_released = on_bt_indicator_binding_released,
