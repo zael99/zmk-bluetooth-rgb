@@ -140,6 +140,12 @@ static void set_pixel_rgb_color(int index, struct led_rgb color) {
     pixels[index] = color;
 }
 
+static void set_pixels_solid_rgb_color(struct led_rgb color) {
+    for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
+        set_pixel_rgb_color(i, color);
+    }
+}
+
 static void save_current_led_state() {
     prev_color = zmk_rgb_underglow_calc_hue(0);
     prev_effect = zmk_rgb_underglow_calc_effect(0);
@@ -173,10 +179,16 @@ static void refresh_bt_leds() {
     // Save current color and effect before changing
     save_current_led_state();
     
+    // Deactivate rgb underglow to prevent color flashing when changing colors/effects
+    zmk_rgb_underglow_off();
+    set_pixels_solid_rgb_color(hsb_to_rgb(hsb_scale_min_max(active_color)));
+
+    led_strip_update_rgb(&led_strip, &pixels, STRIP_NUM_PIXELS);
+
     // Set to active color with effect 0
-    zmk_rgb_underglow_on();
+    /*zmk_rgb_underglow_on();
     zmk_rgb_underglow_set_hsb(active_color);
-    zmk_rgb_underglow_select_effect(0);
+    zmk_rgb_underglow_select_effect(0);*/
 }
 /* ====== Helper Functions ====== */
 
