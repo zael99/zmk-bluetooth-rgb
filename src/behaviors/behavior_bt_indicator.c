@@ -183,7 +183,7 @@ static void refresh_bt_leds() {
     zmk_rgb_underglow_off();
     set_pixels_solid_rgb_color(hsb_to_rgb(hsb_scale_min_max(active_color)));
 
-    led_strip_update_rgb(&led_strip, &pixels, STRIP_NUM_PIXELS);
+    led_strip_update_rgb(led_strip, &pixels, STRIP_NUM_PIXELS);
 
     // Set to active color with effect 0
     /*zmk_rgb_underglow_on();
