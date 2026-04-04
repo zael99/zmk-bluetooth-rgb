@@ -67,22 +67,27 @@ struct zmk_led_hsb active_color = ACTIVE_LED_COLOR;
 struct zmk_led_hsb prev_color;
 int prev_effect = -1;
 bool prev_on_off_state = false;
+
+static struct k_work_delayable bt_indicator_refresh_work;
 /* ====== Properties ====== */
 
 /* ====== Initialization ====== */
+static void bt_indicator_refresh_handler(struct k_work *work) {
+    if (!is_indicator_active) {
+        return;
+    }
+    set_pixels_solid_rgb_color(hsb_to_rgb(hsb_scale_min_max(active_color)));
+    led_strip_update_rgb(led_strip, &pixels, STRIP_NUM_PIXELS);
+}
+
 static int bt_indicator_init(const struct device *dev) {
     led_strip = DEVICE_DT_GET(STRIP_CHOSEN);
+    k_work_init_delayable(&bt_indicator_refresh_work, bt_indicator_refresh_handler);
     return 0;
 };
 /* ====== Initialization ====== */
 
-/* ====== Helper Functions ====== */
-static struct zmk_led_hsb hsb_scale_min_max(struct zmk_led_hsb hsb) {
-    hsb.b = CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN +
-            (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX - CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN) * hsb.b * BRT_MAX_MULTIPLIER;
-    return hsb;
-}
-
+/* ====== Color Conversion Functions ====== */
 static struct led_rgb hsb_to_rgb(struct zmk_led_hsb hsb) {
     float r = 0, g = 0, b = 0;
 
@@ -131,7 +136,9 @@ static struct led_rgb hsb_to_rgb(struct zmk_led_hsb hsb) {
 
     return rgb;
 }
+/* ====== Color Conversion Functions ====== */
 
+/* ====== RGB Functions ====== */
 static void set_pixel_rgb_color(int index, struct led_rgb color) {
     if (index > STRIP_NUM_PIXELS) {
         return;
@@ -145,7 +152,31 @@ static void set_pixels_solid_rgb_color(struct led_rgb color) {
         set_pixel_rgb_color(i, color);
     }
 }
+/* ====== RGB Functions ====== */
 
+/* ====== HSB Functions ====== */
+static void set_pixel_hsb_color(int index, struct zmk_led_hsb color) {
+    if (index > STRIP_NUM_PIXELS) {
+        return;
+    }
+
+    pixels[index] = hsb_to_rgb(hsb_scale_min_max(color));
+}
+
+static void set_pixels_solid_hsb_color(struct zmk_led_hsb color) {
+    for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
+        set_pixel_hsb_color(i, color);
+    }
+}
+
+static struct zmk_led_hsb hsb_scale_min_max(struct zmk_led_hsb hsb) {
+    hsb.b = CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN +
+            (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX - CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN) * hsb.b * BRT_MAX_MULTIPLIER;
+    return hsb;
+}
+/* ====== HSB Functions ====== */
+
+/* ====== LED State Management ====== */
 static void save_current_led_state() {
     prev_color = zmk_rgb_underglow_calc_hue(0);
     prev_effect = zmk_rgb_underglow_calc_effect(0);
@@ -170,7 +201,9 @@ static void restore_prev_led_state() {
         zmk_rgb_underglow_off();
     }
 }
+/* ====== LED State Management ====== */
 
+/* ====== Helper Functions ====== */
 static void refresh_bt_leds() {
     if (!is_indicator_active) {
         return;
@@ -181,14 +214,9 @@ static void refresh_bt_leds() {
     
     // Deactivate rgb underglow to prevent color flashing when changing colors/effects
     zmk_rgb_underglow_off();
-    set_pixels_solid_rgb_color(hsb_to_rgb(hsb_scale_min_max(active_color)));
-
-    led_strip_update_rgb(led_strip, &pixels, STRIP_NUM_PIXELS);
-
-    // Set to active color with effect 0
-    /*zmk_rgb_underglow_on();
-    zmk_rgb_underglow_set_hsb(active_color);
-    zmk_rgb_underglow_select_effect(0);*/
+    
+    // Schedule the LED update for 1000ms later to avoid conflicts with rgb_underglow handler
+    k_work_schedule(&bt_indicator_refresh_work, K_MSEC(1000));
 }
 /* ====== Helper Functions ====== */
 
@@ -197,6 +225,7 @@ void set_bt_indicator_state(bool active) {
     is_indicator_active = active;
 
     if (!is_indicator_active) {
+        k_work_cancel_delayable(&bt_indicator_refresh_work);
         restore_prev_led_state();
     }
 
