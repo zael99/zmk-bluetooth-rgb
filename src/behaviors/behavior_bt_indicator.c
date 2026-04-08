@@ -34,141 +34,19 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 //#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
 /* ====== Defines ====== */
-#define STRIP_CHOSEN DT_CHOSEN(zmk_underglow)
-#define STRIP_NUM_PIXELS DT_PROP(STRIP_CHOSEN, chain_length)
-
-#define HUE_MAX 360
-#define SAT_MAX 100
-#define BRT_MAX 100
-
-#define HUE_MAX_MULTIPLIER (1.0f / HUE_MAX)
-#define SAT_MAX_MULTIPLIER (1.0f / SAT_MAX)
-#define BRT_MAX_MULTIPLIER (1.0f / BRT_MAX)
-
-// 1/256
-#define RGB_MULTIPIER 0.0039215686f
-
-#define ACTIVE_LED_COLOR (struct zmk_led_hsb) {.h = 0, .s = 100, .b = 100}
-#define INACTIVE_LED_COLOR (struct zmk_led_hsb) {.h = 240, .s = 100, .b = 50}
+#define ACTIVE_LED_COLOR (struct zmk_led_hsb) {.h = 240, .s = 100, .b = 100}
 /* ====== Defines ====== */
 
 /* ====== Properties ====== */
-
-static const struct device *led_strip;
-
-static struct led_rgb pixels[STRIP_NUM_PIXELS];
-
-static uint8_t profile_leds[] = {17, 18, 19, 20, 21};
+static uint8_t profile_leds[] = {5, 4, 3, 2, 1};
 static bool is_indicator_active = false;
 
-struct zmk_led_hsb inactive_color = INACTIVE_LED_COLOR;
-struct zmk_led_hsb active_color = ACTIVE_LED_COLOR;
-
 struct zmk_led_hsb prev_color;
-int prev_effect = -1;
+int prev_effect = -99;
 bool prev_on_off_state = false;
-
-static struct k_work_delayable bt_indicator_refresh_work;
 /* ====== Properties ====== */
 
-/* ====== Color Conversion Functions ====== */
-static struct led_rgb hsb_to_rgb(struct zmk_led_hsb hsb) {
-    float r = 0, g = 0, b = 0;
-
-    uint8_t i = hsb.h / 60;
-    float v = hsb.b * BRT_MAX_MULTIPLIER;
-    float s = hsb.s * SAT_MAX_MULTIPLIER;
-    float f = hsb.h * HUE_MAX_MULTIPLIER * 6 - i;
-    float p = v * (1 - s);
-    float q = v * (1 - f * s);
-    float t = v * (1 - (1 - f) * s);
-
-    switch (i % 6) {
-        case 0:
-            r = v;
-            g = t;
-            b = p;
-            break;
-        case 1:
-            r = q;
-            g = v;
-            b = p;
-            break;
-        case 2:
-            r = p;
-            g = v;
-            b = t;
-            break;
-        case 3:
-            r = p;
-            g = q;
-            b = v;
-            break;
-        case 4:
-            r = t;
-            g = p;
-            b = v;
-            break;
-        case 5:
-            r = v;
-            g = p;
-            b = q;
-            break;
-    }
-
-    struct led_rgb rgb = {.r = (uint8_t)(r * 255), .g = (uint8_t)(g * 255), .b = (uint8_t)(b * 255)};
-
-    return rgb;
-}
-/* ====== Color Conversion Functions ====== */
-
-/* ====== RGB Functions ====== */
-static void set_pixel_rgb_color(int index, struct led_rgb color) {
-    if (index > STRIP_NUM_PIXELS) {
-        return;
-    }
-
-    pixels[index] = color;
-}
-
-static void set_pixels_solid_rgb_color(struct led_rgb color) {
-    for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
-        set_pixel_rgb_color(i, color);
-    }
-}
-/* ====== RGB Functions ====== */
-
-/* ====== HSB Functions ====== */
-static struct zmk_led_hsb hsb_scale_min_max(struct zmk_led_hsb hsb) {
-    hsb.b = CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN +
-            (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX - CONFIG_ZMK_RGB_UNDERGLOW_BRT_MIN) * hsb.b * BRT_MAX_MULTIPLIER;
-    return hsb;
-}
-
-static void set_pixel_hsb_color(int index, struct zmk_led_hsb color) {
-    set_pixel_rgb_color(index, hsb_to_rgb(hsb_scale_min_max(color)));
-}
-
-static void set_pixels_solid_hsb_color(struct zmk_led_hsb color) {
-    struct led_rgb rgb_color = hsb_to_rgb(hsb_scale_min_max(color));
-    for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
-        set_pixel_rgb_color(i, rgb_color);
-    }
-}
-/* ====== HSB Functions ====== */
-
 /* ====== LED State Management ====== */
-static void bt_indicator_refresh_handler(struct k_work *work) {
-    LOG_DBG("BT indicator refresh handler executing");
-    if (!is_indicator_active) {
-        LOG_DBG("BT indicator became inactive, skipping update");
-        return;
-    }
-    set_pixels_solid_hsb_color(active_color);
-    led_strip_update_rgb(led_strip, &pixels, STRIP_NUM_PIXELS);
-    LOG_DBG("BT indicator LEDs updated to active color");
-}
-
 static void save_current_led_state() {
     prev_color = zmk_rgb_underglow_calc_hue(0);
     prev_effect = zmk_rgb_underglow_calc_effect(0);
@@ -177,9 +55,7 @@ static void save_current_led_state() {
 
 static void restore_prev_led_state() {
     // Restore previous effect if it was set
-    if (prev_effect != -1) {
-        zmk_rgb_underglow_select_effect(prev_effect);
-    }
+    zmk_rgb_underglow_select_effect(prev_effect);
 
     // Only restore color if it was previously set (prevents restoring to default if no color was set before)
     if (prev_color.h > 0 || prev_color.s > 0 || prev_color.b > 0) {
@@ -202,45 +78,46 @@ static void refresh_bt_leds() {
         return;
     }
 
-    // Save current color and effect before changing
-    save_current_led_state();
+    // Turn on rgb underglow if it's not already on
+    zmk_rgb_underglow_on();
     
-    // Deactivate rgb underglow to prevent color flashing when changing colors/effects
-    zmk_rgb_underglow_off();
-    
-    // Schedule the LED update for 1000ms later to avoid conflicts with rgb_underglow handler
-    LOG_DBG("BT indicator refresh called, scheduling work for 1000ms");
-    k_work_schedule(&bt_indicator_refresh_work, K_MSEC(1000));
+    // Set the color to the active color
+    uint8_t active_profile = zmk_ble_active_profile_index();
+
+    for (int i = 0; i < sizeof(profile_leds); i++) {
+        if (i == active_profile) {
+            zmk_rgb_underglow_set_layered_hsb_index(profile_leds[i], ACTIVE_LED_COLOR);
+        } else {
+            zmk_rgb_underglow_set_layered_hsb_index(profile_leds[i], (struct zmk_led_hsb){0, 0, 0});
+        }
+    }
 }
 /* ====== Helper Functions ====== */
 
 /* ====== Keypress Handlers ====== */
 void set_bt_indicator_state(bool active) {
-    LOG_DBG("BT indicator state change: active=%d", active);
     is_indicator_active = active;
-
-    if (!is_indicator_active) {
-        LOG_DBG("BT indicator released, cancelling work and restoring state");
-        k_work_cancel_delayable(&bt_indicator_refresh_work);
-        restore_prev_led_state();
-    }
 
     refresh_bt_leds();
 }
 
 static int on_bt_indicator_binding_pressed(struct zmk_behavior_binding *binding,
                                            struct zmk_behavior_binding_event event) {
+    save_current_led_state();
     set_bt_indicator_state(true);
+
     return ZMK_BEHAVIOR_OPAQUE;
 }
 
 static int on_bt_indicator_binding_released(struct zmk_behavior_binding *binding,
                                             struct zmk_behavior_binding_event event) {
+    restore_prev_led_state();
     set_bt_indicator_state(false);
+
     return ZMK_BEHAVIOR_OPAQUE;
 }
 
-static const struct behavior_driver_api bt_indicator_driver_api = {
+static const struct behavior_driver_api behavior_bt_indicator_driver_api = {
     .binding_pressed = on_bt_indicator_binding_pressed,
     .binding_released = on_bt_indicator_binding_released,
     .locality = BEHAVIOR_LOCALITY_GLOBAL
@@ -259,19 +136,24 @@ ZMK_SUBSCRIPTION(behavior_bt_indicator, zmk_ble_active_profile_changed);
 
 /* ====== ZMK Behaviour Registration ====== */
 static int bt_indicator_init(const struct device *dev) {
-    led_strip = DEVICE_DT_GET(STRIP_CHOSEN);
-    k_work_init_delayable(&bt_indicator_refresh_work, bt_indicator_refresh_handler);
     return 0;
 };
 
-BEHAVIOR_DT_INST_DEFINE(0, 
-                        bt_indicator_init, 
-                        NULL, 
-                        NULL,                               
-                        NULL, 
-                        POST_KERNEL,                          
-                        CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, 
-                        &bt_indicator_driver_api);
+#define BEHAVIOR_BT_INDICATOR_INST(n)                                                       \
+    /*static struct behavior_bt_indicator_config behavior_bt_indicator_config_##n = {         \
+        .default_layer = DT_INST_PROP(n, default_layer),                                    \
+    };*/                                                                                      \
+                                                                                            \
+    BEHAVIOR_DT_INST_DEFINE(n,                                                              \
+                            bt_indicator_init,                                              \
+                            NULL,                                                           \
+                            NULL,                                                           \
+                            NULL /*&behavior_bt_indicator_config_##n*/,                     \
+                            POST_KERNEL,                                                    \
+                            CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,                            \
+                            &behavior_bt_indicator_driver_api);
+
+DT_INST_FOREACH_STATUS_OKAY(BEHAVIOR_BT_INDICATOR_INST)
 /* ====== ZMK Behaviour Registration ====== */
 
 //#endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */
