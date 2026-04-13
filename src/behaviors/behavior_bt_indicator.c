@@ -35,6 +35,7 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 /* ====== Defines ====== */
 #define ACTIVE_LED_COLOR (struct zmk_led_hsb) {.h = 240, .s = 100, .b = 100}
+#define OFF_LED_COLOR (struct zmk_led_hsb) {0, 0, 0}
 /* ====== Defines ====== */
 
 /* ====== Properties ====== */
@@ -72,7 +73,10 @@ static void restore_prev_led_state() {
 /* ====== LED State Management ====== */
 
 /* ====== Helper Functions ====== */
+
 static void refresh_bt_leds() {
+    zmk_rgb_underglow_clear_layered_leds();
+    
     if (!is_indicator_active) {
         LOG_DBG("BT indicator not active, skipping refresh");
         return;
@@ -81,16 +85,14 @@ static void refresh_bt_leds() {
     // Turn on rgb underglow if it's not already on
     zmk_rgb_underglow_on();
     
+    // Make sure underglow color is set to the equivalent of off if the prev state is off
+    if (!prev_on_off_state) {
+        zmk_rgb_underglow_set_hsb(OFF_LED_COLOR);
+    }
+
     // Set the color to the active color
     uint8_t active_profile = zmk_ble_active_profile_index();
-
-    for (int i = 0; i < sizeof(profile_leds); i++) {
-        if (i == active_profile) {
-            zmk_rgb_underglow_set_layered_hsb_index(profile_leds[i], ACTIVE_LED_COLOR);
-        } else {
-            zmk_rgb_underglow_set_layered_hsb_index(profile_leds[i], (struct zmk_led_hsb){0, 0, 0});
-        }
-    }
+    zmk_rgb_underglow_set_layered_hsb_index(profile_leds[active_profile], ACTIVE_LED_COLOR);
 }
 /* ====== Helper Functions ====== */
 
